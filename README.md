@@ -55,21 +55,32 @@
 Меняя `--brand`, обновите заодно два места, где красный записан явно:
 favicon в `<link rel="icon">` (data-URI) и `og-source.html`, после чего пересоберите `og.png`.
 
-## Как задеплоить на GitHub Pages
+## Деплой
+
+Калькулятор живёт на GitHub Pages: **https://parkerspb24-coder.github.io/phuket-yield-calculator/**
+
+Обновление — обычный push в `main`, Pages пересобирает страницу сам за минуту:
 
 ```bash
-git remote add origin git@github.com:<аккаунт>/<репозиторий>.git
-git push -u origin main
+git push origin main
 ```
 
-Затем в репозитории: **Settings → Pages → Source: Deploy from a branch → Branch: `main` / `(root)` → Save.**
-Через минуту страница поднимется на `https://<аккаунт>.github.io/<репозиторий>/`.
+Если поднимаете копию под другой аккаунт или филиал:
 
-После деплоя пропишите абсолютный адрес превью, иначе соцсети не подтянут картинку:
+```bash
+gh repo create <репозиторий> --public --source=. --remote=origin --push
+gh api -X POST repos/<аккаунт>/<репозиторий>/pages -f "source[branch]=main" -f "source[path]=/"
+```
+
+После этого обязательно перепишите два мета-тега в `index.html` под новый адрес,
+иначе соцсети покажут превью и ссылку старого сайта:
 
 ```html
+<meta property="og:url" content="https://<аккаунт>.github.io/<репозиторий>/">
 <meta property="og:image" content="https://<аккаунт>.github.io/<репозиторий>/og.png">
 ```
+
+Относительный путь к `og.png` тут не работает: краулеры соцсетей требуют абсолютный адрес.
 
 ## Формулы
 
