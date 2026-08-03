@@ -1,0 +1,26 @@
+# Калькулятор доходности — статика, отдаём из тома, который уже смонтирован в контейнер
+# (/opt/phuket-guide/site → /srv/phuket-guide). Отдельный том не заводим намеренно:
+# новый volume потребовал бы пересоздания контейнера Caddy, то есть простоя всех сайтов
+# разом ради одной статической страницы. Тем же путём живёт phoenix.caddy.
+#
+# Адрес с IP в имени намеренно не заводим: он светит адрес сервера и плодит второй
+# индексируемый адрес того же контента. Хост здесь один, брендовый.
+calc.etagithailand.com {
+	root * /srv/phuket-guide/calc
+	file_server
+
+	encode gzip zstd
+
+	# Разметку браузер обязан сверять при каждом заходе: калькулятор — один файл,
+	# и закэшированная страница означает старые формулы у клиента. Превью для соцсетей
+	# меняется редко и весит 110 КБ, его держим в кэше сутки.
+	@document path / /index.html
+	header @document Cache-Control "no-cache, must-revalidate"
+	@static path /og.png /logo.svg
+	header @static Cache-Control "public, max-age=86400"
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

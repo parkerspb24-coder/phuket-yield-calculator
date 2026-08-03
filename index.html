@@ -10,12 +10,15 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Калькулятор доходности недвижимости на Пхукете">
 <meta property="og:description" content="Краткосрочная и долгосрочная аренда: чистая прибыль, годовая доходность и срок окупаемости в трёх сценариях.">
-<meta property="og:url" content="https://parkerspb24-coder.github.io/phuket-yield-calculator/">
-<meta property="og:image" content="https://parkerspb24-coder.github.io/phuket-yield-calculator/og.png">
+<meta property="og:url" content="https://calc.etagithailand.com/">
+<meta property="og:image" content="https://calc.etagithailand.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Этажи Пхукет">
 <meta name="twitter:card" content="summary_large_image">
+<!-- Копия на GitHub Pages остаётся резервным адресом, но канонический адрес один,
+     иначе поиск сочтёт две страницы дублями и сам выберет, какую показывать. -->
+<link rel="canonical" href="https://calc.etagithailand.com/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='55 80 775 570'%3E%3Cg fill='%23E2231A'%3E%3Cpath d='M60,645 L113,256 L467,88 L467,618 Z'/%3E%3Cpath d='M467,88 L823,408 L823,424 L467,124.5 Z'/%3E%3Cpath d='M467,205.8 L823,459.6 L823,475.5 L467,242.3 Z'/%3E%3Cpath d='M467,323.6 L823,511.1 L823,527.1 L467,360.1 Z'/%3E%3Cpath d='M467,441.3 L823,562.7 L823,578.7 L467,477.9 Z'/%3E%3Cpath d='M467,559.1 L823,614.2 L823,630.2 L467,595.6 Z'/%3E%3C/g%3E%3C/svg%3E">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -598,12 +601,22 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
   var DUR = 450;                             // мс
   var CAP = 60;                              // потолок шкалы окупаемости, лет
   var KEYS = ["price","gross","mgmtFee","ops","tax","net","netYear","yieldPct","pbMin","pbAvg","pbMax"];
-  var D = {}, G = {}, F = {}, raf = 0, t0 = -1, started = false;
+  var D = {}, G = {}, F = {}, raf = 0, t0 = -1, started = false, guard = 0;
   var M = null;                              // последняя модель: источник флагов, а не чисел
 
   function cap(v){ return isFinite(v) ? Math.min(v, CAP) : CAP; }
 
   function snap(){ for (var i = 0; i < KEYS.length; i++) D[KEYS[i]] = G[KEYS[i]]; }
+
+  // Браузер замораживает requestAnimationFrame у фоновой вкладки, и анимация встаёт
+  // на промежуточном кадре. Без страховки пользователь, переключившийся в другое
+  // приложение в момент пересчёта, вернётся к неверному числу и не узнает об этом:
+  // оно так и останется висеть до следующего движения слайдера.
+  function settle(){
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    clearTimeout(guard); t0 = -1;
+    snap(); paint();
+  }
 
   function push(m){
     M = m;
@@ -613,14 +626,14 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
 
     if (!started || reduce.matches) {
       started = true;
-      snap();
-      if (raf) { cancelAnimationFrame(raf); raf = 0; }
-      paint();
+      settle();
       return;
     }
     for (var i = 0; i < KEYS.length; i++) F[KEYS[i]] = D[KEYS[i]];
     t0 = -1;
     if (!raf) raf = requestAnimationFrame(step);
+    clearTimeout(guard);
+    guard = setTimeout(settle, DUR + 150);   // таймеры фоновой вкладки лишь замедляются, а не встают
   }
 
   function step(ts){
@@ -633,7 +646,7 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
     }
     paint();
     raf = p < 1 ? requestAnimationFrame(step) : 0;
-    if (p >= 1) t0 = -1;
+    if (p >= 1) { t0 = -1; clearTimeout(guard); }
   }
 
   /* ---------- SVG-помощники ---------- */
@@ -942,6 +955,11 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
     if (!b || b.dataset.mode === mode) return;
     setMode(b.dataset.mode, true);
     recalc();
+  });
+
+  // вернулись на вкладку — показываем итоговые числа, а не кадр, на котором нас заморозили
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden && started) settle();
   });
 
   // ссылку с расчётом могли открыть при уже открытой странице или прийти сюда кнопкой «назад»

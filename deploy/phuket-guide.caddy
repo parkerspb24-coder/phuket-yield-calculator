@@ -1,0 +1,23 @@
+guide.etagithailand.com {
+	root * /srv/phuket-guide
+	file_server
+	encode gzip
+	@noCache path /index.html
+	header @noCache Cache-Control "no-cache, must-revalidate"
+
+	# Калькулятор доходности физически лежит внутри тома гайда — отдельный том потребовал
+	# бы пересоздания контейнера Caddy, то есть простоя всех сайтов разом. Но дом у него
+	# один: calc.etagithailand.com. Без этого редиректа одна и та же страница доступна по
+	# двум адресам и делит вес в поиске. redir в порядке директив Caddy идёт раньше
+	# file_server, поэтому до отдачи файлов дело не доходит.
+	@calc path /calc /calc/*
+	redir @calc https://calc.etagithailand.com/ permanent
+}
+
+# Старый адрес ЗАКРЫТ 2026-08-01: всё живёт на брендовом домене.
+# Блок оставлен, чтобы отвечать чисто, а не рвать TLS. Вернуть = перенести хост обратно
+# в список хостов рабочего блока выше.
+phuket-guide.178-236-248-55.nip.io {
+	respond 404
+	header X-Robots-Tag "noindex, nofollow, noarchive"
+}
