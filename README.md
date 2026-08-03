@@ -57,30 +57,52 @@ favicon в `<link rel="icon">` (data-URI) и `og-source.html`, после чег
 
 ## Деплой
 
-Калькулятор живёт на GitHub Pages: **https://parkerspb24-coder.github.io/phuket-yield-calculator/**
+Боевой адрес: **https://calc.etagithailand.com/** — статика на VPS `178.236.248.55`, отдаётся через Caddy.
+Резервная копия живёт на GitHub Pages (`parkerspb24-coder.github.io/phuket-yield-calculator/`),
+но канонический адрес один — он прописан в `<link rel="canonical">` и og-тегах.
 
-Обновление — обычный push в `main`, Pages пересобирает страницу сам за минуту:
-
-```bash
-git push origin main
-```
-
-Если поднимаете копию под другой аккаунт или филиал:
+### Обновить боевой сайт
 
 ```bash
-gh repo create <репозиторий> --public --source=. --remote=origin --push
-gh api -X POST repos/<аккаунт>/<репозиторий>/pages -f "source[branch]=main" -f "source[path]=/"
+ssh -i ~/.ssh/miniapp_vps root@178.236.248.55 "bash /root/ops/ops-lock.sh take 'обновление калькулятора'"
+scp -i ~/.ssh/miniapp_vps index.html og.png root@178.236.248.55:/opt/phuket-guide/site/calc/
+ssh -i ~/.ssh/miniapp_vps root@178.236.248.55 "bash /root/ops/ops-lock.sh free"
+git push origin main   # заодно обновит резервную копию на Pages
 ```
 
-После этого обязательно перепишите два мета-тега в `index.html` под новый адрес,
-иначе соцсети покажут превью и ссылку старого сайта:
+Перезагружать Caddy не нужно: это статические файлы, а не конфиг.
+Страница отдаётся с `Cache-Control: no-cache`, поэтому браузер увидит новую версию сразу.
+Исключение — Telegram WebApp: он кэширует агрессивно, при проверке добавляйте `?v=<timestamp>`.
 
-```html
-<meta property="og:url" content="https://<аккаунт>.github.io/<репозиторий>/">
-<meta property="og:image" content="https://<аккаунт>.github.io/<репозиторий>/og.png">
+### Как это устроено на сервере
+
+| Что | Где |
+|---|---|
+| Файлы сайта | `/opt/phuket-guide/site/calc/` |
+| Конфиг Caddy | `/opt/caddy/sites/calc.caddy` (копия в `deploy/calc.caddy`) |
+| Бэкап конфигов | `/root/backups/upgrade-2026-08/opt/caddy/` |
+
+Калькулятор лежит внутри тома гайда намеренно: этот том уже смонтирован в контейнер Caddy,
+а новый потребовал бы пересоздания контейнера, то есть простоя всех сайтов разом.
+Побочный эффект — доступность по `guide.etagithailand.com/calc/` — закрыт постоянным
+редиректом в `deploy/phuket-guide.caddy`.
+
+Правку конфигов Caddy применять так (обязательно под замком `/root/ops/ops-lock.sh`):
+
+```bash
+scp -i ~/.ssh/miniapp_vps deploy/calc.caddy root@178.236.248.55:/opt/caddy/sites/calc.caddy
+ssh -i ~/.ssh/miniapp_vps root@178.236.248.55 \
+  "docker exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile && \
+   docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
 ```
 
-Относительный путь к `og.png` тут не работает: краулеры соцсетей требуют абсолютный адрес.
+`validate` перед `reload` обязателен: битый конфиг уронит разом все сайты на этом Caddy.
+
+### Перенос на другой домен
+
+Перепишите три места в `index.html` — `og:url`, `og:image` и `canonical`, затем имя хоста
+в `deploy/calc.caddy`. Относительный путь к `og.png` не подходит: краулеры соцсетей
+требуют абсолютный адрес.
 
 ## Формулы
 
