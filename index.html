@@ -851,14 +851,15 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
   }
 
   /* ---------- Состояние в URL ---------- */
-  var hashTimer = 0;
+  var hashTimer = 0, selfHash = "";
   function writeHash(){
     clearTimeout(hashTimer);
     hashTimer = setTimeout(function(){
       var p = "m=" + mode +
         "&p=" + IN.price.value + "&d=" + IN.daily.value + "&o=" + IN.occ.value +
         "&r=" + IN.monthly.value + "&f=" + IN.mgmt.value + "&x=" + IN.ops.value + "&t=" + IN.tax.value;
-      history.replaceState(null, "", "#" + p);
+      selfHash = "#" + p;
+      history.replaceState(null, "", selfHash);
     }, 250);
   }
   function readHash(){
@@ -939,6 +940,14 @@ input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow
     var b = e.target.closest("button[data-mode]");
     if (!b || b.dataset.mode === mode) return;
     setMode(b.dataset.mode, true);
+    recalc();
+  });
+
+  // ссылку с расчётом могли открыть при уже открытой странице или прийти сюда кнопкой «назад»
+  window.addEventListener("hashchange", function(){
+    if (location.hash === selfHash || !location.hash) return;
+    readHash();
+    setMode(mode, true);
     recalc();
   });
 
