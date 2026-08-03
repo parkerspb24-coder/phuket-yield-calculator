@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>OG-карточка</title>
+<!-- Исходник превью для соцсетей. Открыть в браузере 1200x630 и снять скриншот в og.png -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:1200px;height:630px;overflow:hidden;
+    background:#0E1113;color:#EDF0F2;
+    font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;
+    position:relative;
+  }
+  .atmo{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(620px 420px at 88% -8%, rgba(226,35,26,.20), transparent 62%),
+      radial-gradient(680px 480px at 2% 108%, rgba(120,148,160,.10), transparent 64%);
+  }
+  .in{position:relative;padding:64px 72px;height:100%;display:flex;flex-direction:column;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand svg{height:34px;width:auto;color:#E2231A}
+  .brand b{font-family:"Unbounded",sans-serif;font-weight:600;font-size:19px;letter-spacing:.06em}
+  .brand span{color:#7C858B;font-size:18px;font-weight:500}
+  h1{
+    font-family:"Unbounded",sans-serif;font-weight:600;
+    font-size:62px;line-height:1.06;letter-spacing:-.025em;max-width:15ch;
+  }
+  .sub{margin-top:20px;color:#9BA4AA;font-size:23px;font-weight:500;max-width:46ch}
+  .strip{display:flex;align-items:flex-end;gap:56px}
+  .k{color:#7C858B;font-size:16px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+  .v{font-size:44px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+  .v.hot{color:#E2231A;font-family:"Unbounded",sans-serif;font-weight:600;font-size:52px}
+  .bars{flex:1;display:flex;flex-direction:column;gap:9px;padding-bottom:8px}
+  .bar{height:10px;border-radius:5px;background:#1F2528;position:relative}
+  .bar i{position:absolute;top:0;bottom:0;border-radius:5px;display:block}
+</style>
+</head>
+<body>
+<div class="atmo"></div>
+<div class="in">
+
+  <div class="brand">
+    <svg viewBox="55 80 775 570" fill="currentColor" aria-hidden="true">
+      <path d="M60,645 L113,256 L467,88 L467,618 Z"/>
+      <path d="M467,88 L823,408 L823,424 L467,124.5 Z"/>
+      <path d="M467,146.9 L823,433.8 L823,449.8 L467,183.4 Z"/>
+      <path d="M467,205.8 L823,459.6 L823,475.5 L467,242.3 Z"/>
+      <path d="M467,264.7 L823,485.3 L823,501.3 L467,301.2 Z"/>
+      <path d="M467,323.6 L823,511.1 L823,527.1 L467,360.1 Z"/>
+      <path d="M467,382.4 L823,536.9 L823,552.9 L467,419.0 Z"/>
+      <path d="M467,441.3 L823,562.7 L823,578.7 L467,477.9 Z"/>
+      <path d="M467,500.2 L823,588.4 L823,604.4 L467,536.7 Z"/>
+      <path d="M467,559.1 L823,614.2 L823,630.2 L467,595.6 Z"/>
+    </svg>
+    <b>ЭТАЖИ</b><span>Пхукет</span>
+  </div>
+
+  <div>
+    <h1>Калькулятор доходности на Пхукете</h1>
+    <p class="sub">Чистая прибыль, годовая доходность и срок окупаемости для краткосрочной и долгосрочной аренды.</p>
+  </div>
+
+  <div class="strip">
+    <div>
+      <div class="k">Чистая прибыль в месяц</div>
+      <div class="v hot">39 010 ฿</div>
+    </div>
+    <div>
+      <div class="k">Доходность</div>
+      <div class="v">9,4%</div>
+    </div>
+    <div>
+      <div class="k">Окупаемость</div>
+      <div class="v">10,7 года</div>
+    </div>
+    <div class="bars">
+      <div class="bar"><i style="left:0;width:100%;background:#C2CACF"></i></div>
+      <div class="bar"><i style="left:75%;width:25%;background:#8E979D"></i></div>
+      <div class="bar"><i style="left:62.9%;width:12.1%;background:#6B747A"></i></div>
+      <div class="bar"><i style="left:59.1%;width:3.8%;background:#4C5459"></i></div>
+      <div class="bar"><i style="left:0;width:59.1%;background:#E2231A"></i></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

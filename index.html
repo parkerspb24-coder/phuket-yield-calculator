@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Калькулятор доходности недвижимости на Пхукете · Этажи</title>
+<meta name="description" content="Посчитайте, сколько остаётся на руках от аренды недвижимости на Пхукете после комиссии управляющей компании, операционных расходов и налога.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Калькулятор доходности недвижимости на Пхукете">
+<meta property="og:description" content="Краткосрочная и долгосрочная аренда: чистая прибыль, годовая доходность и срок окупаемости в трёх сценариях.">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Этажи Пхукет">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='55 80 775 570'%3E%3Cg fill='%23E2231A'%3E%3Cpath d='M60,645 L113,256 L467,88 L467,618 Z'/%3E%3Cpath d='M467,88 L823,408 L823,424 L467,124.5 Z'/%3E%3Cpath d='M467,205.8 L823,459.6 L823,475.5 L467,242.3 Z'/%3E%3Cpath d='M467,323.6 L823,511.1 L823,527.1 L467,360.1 Z'/%3E%3Cpath d='M467,441.3 L823,562.7 L823,578.7 L467,477.9 Z'/%3E%3Cpath d='M467,559.1 L823,614.2 L823,630.2 L467,595.6 Z'/%3E%3C/g%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Токены. Перекраска под другой филиал — правка только этого блока ===== */
+:root{
+  /* поверхности */
+  --void:#0E1113;
+  --panel:#161A1D;
+  --panel-2:#1C2225;
+  --edge:#272E32;
+  --rail:#1F2528;
+
+  /* бренд Этажи */
+  --brand:#E2231A;
+  --brand-dim:rgba(226,35,26,.16);
+  --brand-glow:rgba(226,35,26,.32);
+
+  /* текст */
+  --paper:#EDF0F2;
+  --dust:#7C858B;
+  --dust-2:#9BA4AA;
+
+  /* шкала потоков: от «валового» к «съеденному» */
+  --flow-1:#C2CACF;
+  --flow-2:#8E979D;
+  --flow-3:#6B747A;
+  --flow-4:#4C5459;
+
+  /* форма */
+  --r-card:14px;
+  --r-input:10px;
+  --r-pill:999px;
+
+  --shadow:0 18px 48px rgba(0,0,0,.45);
+  --ease:cubic-bezier(.16,1,.3,1);
+
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--void);
+  color:var(--paper);
+  font-family:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  touch-action:manipulation;
+  overflow-x:hidden;
+}
+h1,h2,h3{margin:0;font-weight:600}
+a{color:inherit}
+
+/* фоновая атмосфера */
+.atmo{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(680px 420px at 78% -6%, rgba(226,35,26,.14), transparent 62%),
+    radial-gradient(760px 520px at 8% 108%, rgba(120,148,160,.10), transparent 64%);
+  animation:drift 46s var(--ease) infinite alternate;
+}
+@keyframes drift{
+  from{transform:translate3d(0,0,0) scale(1)}
+  to{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}
+}
+
+.wrap{
+  position:relative;z-index:1;
+  max-width:1180px;margin:0 auto;
+  padding-left:max(clamp(14px,4vw,32px),var(--safe-l));
+  padding-right:max(clamp(14px,4vw,32px),var(--safe-r));
+}
+
+/* ===== Шапка ===== */
+.top{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:calc(20px + var(--safe-t)) 0 18px;
+}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+/* Фирменный знак Этажей, инлайн-SVG. Цвет берётся из color родителя */
+.brand-mark{height:26px;width:auto;display:block;color:var(--brand);flex:none}
+.brand-name{font-family:"Unbounded",sans-serif;font-weight:600;font-size:14px;letter-spacing:.06em}
+.brand-city{color:var(--dust);font-size:13px;font-weight:500;letter-spacing:.02em}
+.top-link{
+  color:var(--dust-2);text-decoration:none;font-size:13px;font-weight:600;
+  border:1px solid var(--edge);border-radius:var(--r-pill);
+  padding:7px 14px;transition:border-color .2s var(--ease),color .2s var(--ease),transform .2s var(--ease);
+  white-space:nowrap;
+}
+.top-link:hover{color:var(--paper);border-color:var(--flow-3)}
+.top-link:active{transform:translateY(1px)}
+
+/* ===== Заголовок ===== */
+.intro{padding:6px 0 26px;max-width:780px}
+.intro h1{
+  font-family:"Unbounded",sans-serif;font-weight:600;
+  font-size:clamp(25px,3.6vw,38px);line-height:1.1;letter-spacing:-.02em;
+}
+.intro p{margin:14px 0 0;color:var(--dust-2);font-size:clamp(14px,1.6vw,16px);max-width:56ch}
+
+/* ===== Сетка ===== */
+.grid{
+  display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
+  gap:20px;align-items:start;padding-bottom:28px;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--edge);
+  border-radius:var(--r-card);
+  box-shadow:var(--shadow);
+}
+.card+.card{margin-top:20px}
+.card-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:18px 20px 0;
+}
+.card-head h2{font-size:14px;font-weight:700;letter-spacing:.01em}
+.card-head span{color:var(--dust);font-size:12px;font-weight:500}
+
+/* ===== Переключатель режимов ===== */
+.modes{
+  position:relative;display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  margin:18px 18px 4px;padding:4px;
+  background:var(--panel-2);border:1px solid var(--edge);border-radius:var(--r-pill);
+}
+.modes-thumb{
+  position:absolute;top:4px;left:4px;bottom:4px;width:calc(50% - 4px);
+  background:var(--brand);border-radius:var(--r-pill);
+  box-shadow:0 6px 18px var(--brand-glow);
+  transition:transform .42s var(--ease);
+  z-index:0;
+}
+.modes[data-mode="long"] .modes-thumb{transform:translateX(calc(100% + 4px))}
+.modes button{
+  position:relative;z-index:1;
+  appearance:none;background:none;border:0;cursor:pointer;
+  padding:11px 8px;border-radius:var(--r-pill);
+  font:inherit;font-weight:700;font-size:14px;color:var(--dust-2);
+  transition:color .3s var(--ease);
+}
+.modes button[aria-selected="true"]{color:#fff}
+.modes button:focus-visible{outline:2px solid var(--paper);outline-offset:2px}
+
+/* ===== Поля ===== */
+.fields{padding:6px 18px 18px}
+.fieldset{border:0;margin:0;padding:0}
+.fieldset[hidden]{display:none}
+.fade-in{animation:fade .34s var(--ease) both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.field{padding:14px 0 6px;border-top:1px solid var(--edge)}
+.field:first-child{border-top:0}
+.field-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.field-top label{font-size:13px;font-weight:600;color:var(--dust-2)}
+.field-val{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.field-scale{display:flex;justify-content:space-between;color:var(--dust);font-size:11px;font-weight:500;margin-top:-2px}
+.field-note{margin:6px 0 0;font-size:12px;color:var(--dust);line-height:1.35}
+/* гасим только само поле, пояснение под ним должно оставаться читаемым */
+.field.is-off .field-top,
+.field.is-off input[type=range],
+.field.is-off .field-scale{opacity:.45}
+
+.sec-title{
+  margin:20px 0 0;padding-top:16px;border-top:1px solid var(--edge);
+  font-size:12px;font-weight:700;color:var(--dust);letter-spacing:.08em;text-transform:uppercase;
+}
+
+/* ===== Слайдеры ===== */
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  display:block;width:100%;height:30px;margin:2px 0 0;
+  background:transparent;cursor:pointer;
+}
+input[type=range]:disabled{cursor:not-allowed}
+.trk{height:6px;border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--fill-c,var(--brand)) var(--fill,0%),var(--rail) var(--fill,0%));}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--fill-c,var(--brand)) var(--fill,0%),var(--rail) var(--fill,0%));}
+input[type=range]::-moz-range-track{height:6px;border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--fill-c,var(--brand)) var(--fill,0%),var(--rail) var(--fill,0%));}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:22px;height:22px;margin-top:-8px;border-radius:50%;
+  background:#fff;border:2px solid var(--void);
+  box-shadow:0 3px 10px rgba(0,0,0,.55);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+input[type=range]::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;border:2px solid var(--void);
+  box-shadow:0 3px 10px rgba(0,0,0,.55);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.16);box-shadow:0 0 0 9px var(--brand-dim)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.16);box-shadow:0 0 0 9px var(--brand-dim)}
+input[type=range]:focus{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--void),0 0 0 5px var(--brand)}
+input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 3px var(--void),0 0 0 5px var(--brand)}
+input[type=range]:disabled::-webkit-slider-thumb{background:var(--flow-4);box-shadow:none}
+input[type=range]:disabled::-moz-range-thumb{background:var(--flow-4);box-shadow:none}
+
+/* ===== Итог ===== */
+.result{padding:20px}
+.result-label{color:var(--dust);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.result-big{
+  font-family:"Unbounded",sans-serif;font-weight:600;
+  font-size:clamp(30px,5.6vw,52px);line-height:1.02;letter-spacing:-.03em;
+  color:var(--brand);margin-top:8px;
+  font-variant-numeric:tabular-nums;
+}
+.result-big.is-loss{color:var(--flow-1)}
+.result-sub{margin-top:6px;color:var(--dust-2);font-size:14px;font-weight:600}
+.result-warn{margin-top:10px;font-size:12.5px;color:var(--flow-1);display:none}
+.result-warn.on{display:block}
+
+/* ===== Плитки ===== */
+.tiles{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;padding:0 20px 20px}
+.tile{background:var(--panel-2);border:1px solid var(--edge);border-radius:var(--r-input);padding:14px}
+.tile-k{color:var(--dust-2);font-size:12px;font-weight:600;line-height:1.25}
+.tile-v{margin-top:6px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.tile-yield{display:flex;flex-direction:column;justify-content:space-between;min-height:118px}
+.tile-yield .tile-v{font-size:clamp(30px,3.4vw,40px);color:var(--paper);margin-top:14px}
+.tile-stack{display:grid;gap:12px}
+.tile-stack .tile-v{font-size:18px}
+
+/* ===== Графика ===== */
+.chart{padding:14px 20px 20px}
+.chart svg{display:block;width:100%;overflow:visible}
+.flow-label{font-size:12px;font-weight:600;fill:var(--dust)}
+.flow-amount{font-size:13.5px;font-weight:800;fill:var(--paper);font-variant-numeric:tabular-nums}
+.flow-amount.dim{fill:var(--dust-2);font-weight:700}
+.pb-tick{font-size:11px;font-weight:600;fill:var(--dust)}
+.pb-val{font-size:12.5px;font-weight:800;fill:var(--paper);font-variant-numeric:tabular-nums}
+/* акцент несёт маркер, а само число белое: красный 15px не добирает 4.5:1 на панели */
+.pb-avg{font-size:15px;font-weight:800;fill:var(--paper);font-variant-numeric:tabular-nums}
+
+/* ===== Липкая полоса результата на узких экранах ===== */
+.sticky{
+  display:none;position:sticky;top:0;z-index:5;
+  margin:0 calc(-1 * max(clamp(14px,4vw,32px),var(--safe-l))) 14px;
+  padding:10px max(clamp(14px,4vw,32px),var(--safe-l));
+  background:rgba(14,17,19,.86);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--edge);
+  align-items:baseline;justify-content:space-between;gap:12px;
+}
+.sticky-k{color:var(--dust);font-size:12px;font-weight:600}
+.sticky-v{font-size:19px;font-weight:800;color:var(--brand);letter-spacing:-.02em}
+.sticky-v.is-loss{color:var(--flow-1)}
+
+/* ===== Низ ===== */
+.foot{
+  padding:4px 0 calc(30px + var(--safe-b));
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;
+}
+.disclaimer{color:var(--dust);font-size:12.5px;line-height:1.5;max-width:62ch;margin:0}
+.copy{
+  appearance:none;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;
+  color:var(--paper);background:var(--panel-2);
+  border:1px solid var(--edge);border-radius:var(--r-pill);
+  padding:11px 20px;white-space:nowrap;
+  transition:border-color .2s var(--ease),transform .12s var(--ease),background .2s var(--ease);
+}
+.copy:hover{border-color:var(--flow-3);background:#222A2E}
+.copy:active{transform:scale(.98)}
+.copy:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.copy.done{border-color:var(--brand);color:var(--brand)}
+
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ===== Появление секций ===== */
+.rise{animation:rise .6s var(--ease) both}
+.rise:nth-child(1){animation-delay:.04s}
+.rise:nth-child(2){animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ===== Адаптив ===== */
+@media (max-width:940px){
+  .grid{grid-template-columns:1fr;gap:16px}
+  .card+.card{margin-top:16px}
+  .sticky{display:flex}
+  .intro{padding-bottom:18px}
+}
+@media (max-width:520px){
+  .top{padding-top:calc(14px + var(--safe-t));padding-bottom:12px}
+  .brand-city{display:none}
+  .tiles{grid-template-columns:1fr;padding:0 16px 16px}
+  .card-head{padding:16px 16px 0;flex-direction:column;align-items:flex-start;gap:2px}
+  .modes{margin:14px 14px 2px}
+  .fields{padding:4px 14px 16px}
+  .result{padding:16px}
+  .chart{padding:12px 14px 16px}
+  .foot{gap:12px}
+  .copy{width:100%}
+}
+@media (max-width:400px){
+  .field-scale{font-size:10px}
+  .tile-yield .tile-v{font-size:30px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  .atmo{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="atmo" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <a class="brand" href="https://etagithailand.com" target="_blank" rel="noopener">
+      <svg class="brand-mark" viewBox="55 80 775 570" fill="currentColor" role="img" aria-label="Этажи">
+        <path d="M60,645 L113,256 L467,88 L467,618 Z"/>
+        <path d="M467,88 L823,408 L823,424 L467,124.5 Z"/>
+        <path d="M467,146.9 L823,433.8 L823,449.8 L467,183.4 Z"/>
+        <path d="M467,205.8 L823,459.6 L823,475.5 L467,242.3 Z"/>
+        <path d="M467,264.7 L823,485.3 L823,501.3 L467,301.2 Z"/>
+        <path d="M467,323.6 L823,511.1 L823,527.1 L467,360.1 Z"/>
+        <path d="M467,382.4 L823,536.9 L823,552.9 L467,419.0 Z"/>
+        <path d="M467,441.3 L823,562.7 L823,578.7 L467,477.9 Z"/>
+        <path d="M467,500.2 L823,588.4 L823,604.4 L467,536.7 Z"/>
+        <path d="M467,559.1 L823,614.2 L823,630.2 L467,595.6 Z"/>
+      </svg>
+      <span class="brand-name">ЭТАЖИ</span>
+      <span class="brand-city">Пхукет</span>
+    </a>
+    <a class="top-link" href="https://etagithailand.com" target="_blank" rel="noopener">etagithailand.com</a>
+  </header>
+
+  <section class="intro">
+    <h1>Сколько приносит недвижимость на Пхукете</h1>
+    <p>Двигайте параметры и смотрите, сколько остаётся на руках после управляющей компании, расходов и налога.</p>
+  </section>
+
+  <div class="sticky" id="sticky">
+    <span class="sticky-k">Чистая прибыль в месяц</span>
+    <span class="sticky-v" id="sticky-net">0 ฿</span>
+  </div>
+
+  <main class="grid">
+
+    <!-- ===== Пульт ===== -->
+    <section class="card rise" aria-label="Параметры расчёта">
+      <div class="modes" id="modes" data-mode="short" role="tablist" aria-label="Тип аренды">
+        <span class="modes-thumb" aria-hidden="true"></span>
+        <button type="button" role="tab" id="tab-short" aria-selected="true" aria-controls="set-short" data-mode="short">Краткосрочная</button>
+        <button type="button" role="tab" id="tab-long" aria-selected="false" aria-controls="set-long" data-mode="long">Долгосрочная</button>
+      </div>
+
+      <div class="fields">
+        <div class="field">
+          <div class="field-top">
+            <label for="s-price">Стоимость объекта</label>
+            <span class="field-val" id="v-price">5 000 000 ฿</span>
+          </div>
+          <input type="range" id="s-price" min="1000000" max="30000000" step="100000" value="5000000" aria-label="Стоимость объекта в батах">
+          <div class="field-scale"><span>1 млн ฿</span><span>30 млн ฿</span></div>
+        </div>
+
+        <fieldset class="fieldset" id="set-short" role="tabpanel" aria-labelledby="tab-short">
+          <div class="field">
+            <div class="field-top">
+              <label for="s-daily">Суточная цена аренды</label>
+              <span class="field-val" id="v-daily">3 000 ฿</span>
+            </div>
+            <input type="range" id="s-daily" min="500" max="30000" step="100" value="3000" aria-label="Суточная цена аренды в батах">
+            <div class="field-scale"><span>500 ฿</span><span>30 000 ฿</span></div>
+          </div>
+          <div class="field">
+            <div class="field-top">
+              <label for="s-occ">Заполняемость в месяц</label>
+              <span class="field-val" id="v-occ">22 дн.</span>
+            </div>
+            <input type="range" id="s-occ" min="5" max="30" step="1" value="22" aria-label="Заполняемость, дней в месяц">
+            <div class="field-scale"><span>5 дней</span><span>30 дней</span></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="fieldset" id="set-long" role="tabpanel" aria-labelledby="tab-long" hidden>
+          <div class="field">
+            <div class="field-top">
+              <label for="s-monthly">Ежемесячная арендная ставка</label>
+              <span class="field-val" id="v-monthly">35 000 ฿</span>
+            </div>
+            <input type="range" id="s-monthly" min="5000" max="200000" step="1000" value="35000" aria-label="Ежемесячная арендная ставка в батах">
+            <div class="field-scale"><span>5 000 ฿</span><span>200 000 ฿</span></div>
+          </div>
+        </fieldset>
+
+        <h3 class="sec-title">Расходы и вычеты</h3>
+
+        <div class="field" id="f-mgmt">
+          <div class="field-top">
+            <label for="s-mgmt">Комиссия управляющей компании</label>
+            <span class="field-val" id="v-mgmt">25%</span>
+          </div>
+          <input type="range" id="s-mgmt" min="0" max="50" step="1" value="25" aria-label="Комиссия управляющей компании, процентов">
+          <div class="field-scale"><span>0%</span><span>50%</span></div>
+          <p class="field-note" id="mgmt-note" hidden>В долгосрочной аренде комиссия не удерживается, поле не влияет на расчёт.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-top">
+            <label for="s-ops">Операционные расходы</label>
+            <span class="field-val" id="v-ops">8 000 ฿/мес</span>
+          </div>
+          <input type="range" id="s-ops" min="0" max="50000" step="500" value="8000" aria-label="Операционные расходы в батах за месяц">
+          <div class="field-scale"><span>0 ฿</span><span>50 000 ฿</span></div>
+        </div>
+
+        <div class="field">
+          <div class="field-top">
+            <label for="s-tax">Налог с чистого дохода</label>
+            <span class="field-val" id="v-tax">6%</span>
+          </div>
+          <input type="range" id="s-tax" min="0" max="30" step="1" value="6" aria-label="Налог с чистого дохода, процентов">
+          <div class="field-scale"><span>0%</span><span>30%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Поток ===== -->
+    <div class="rise">
+      <section class="card" aria-label="Результат">
+        <div class="result">
+          <div class="result-label">Чистая прибыль в месяц</div>
+          <div class="result-big" id="r-net">0 ฿</div>
+          <div class="result-sub" id="r-net-year">в год: 0 ฿</div>
+          <p class="result-warn" id="r-warn">Расходы и налог съедают весь доход. Объект не выходит в плюс при этих параметрах.</p>
+        </div>
+        <div class="tiles">
+          <div class="tile tile-yield">
+            <div class="tile-k">Годовая доходность, % чистыми</div>
+            <div class="tile-v" id="r-yield">0%</div>
+          </div>
+          <div class="tile-stack">
+            <div class="tile">
+              <div class="tile-k">Чистый доход в год</div>
+              <div class="tile-v" id="r-annual">0 ฿</div>
+            </div>
+            <div class="tile">
+              <div class="tile-k">Расходы и налог в месяц</div>
+              <div class="tile-v" id="r-deduct">0 ฿</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Разбор дохода">
+        <div class="card-head">
+          <h2>Куда уходит доход</h2>
+          <span>в месяц</span>
+        </div>
+        <div class="chart">
+          <svg id="flow" role="img" aria-labelledby="flow-desc"><title id="flow-desc">Разбор валового дохода на комиссию, расходы, налог и чистую прибыль</title></svg>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Срок окупаемости">
+        <div class="card-head">
+          <h2>Срок окупаемости</h2>
+          <span id="pb-hint">по трём сценариям заполняемости</span>
+        </div>
+        <div class="chart">
+          <svg id="payback" role="img" aria-labelledby="pb-desc"><title id="pb-desc">Шкала окупаемости от 1 до 40 лет с отметками минимального, среднего и максимального сценария</title></svg>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="foot">
+    <p class="disclaimer">Расчёт ознакомительный. Реальные показатели зависят от локации, сезонности и условий управления. Точные цифры по конкретному объекту считает агент Этажи Пхукет.</p>
+    <button type="button" class="copy" id="copy">Скопировать расчёт</button>
+  </footer>
+
+  <p class="sr" id="live" aria-live="polite"></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var NNBSP = " ";   // узкий неразрывный пробел
+  var MINUS = "−";
+  var $ = function(id){ return document.getElementById(id); };
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* ---------- Форматирование ---------- */
+  function groups(n){
+    return Math.round(Math.abs(n)).toLocaleString("ru-RU").replace(/[\s  ]/g, NNBSP);
+  }
+  function money(n){
+    var s = groups(n) + NNBSP + "฿";
+    return n < -0.5 ? MINUS + s : s;
+  }
+  function moneyNeg(n){ return n > 0.5 ? MINUS + groups(n) + NNBSP + "฿" : groups(0) + NNBSP + "฿"; }
+  function pct1(n){ return n.toFixed(1).replace("-", MINUS).replace(".", ",") + "%"; }
+  // y — анимированное значение, real — точное из модели (Infinity, если объект не выходит в плюс)
+  function years(y, real){
+    if (real !== undefined && !isFinite(real)) return "не окупается";
+    if (!isFinite(y) || y <= 0) return "не окупается";
+    if (y >= CAP - 0.05) return "более " + CAP + " лет";
+    return y.toFixed(1).replace(".", ",") + " года";   // при дробном числе — родительный падеж
+  }
+
+  /* ---------- Модель ---------- */
+  var mode = "short";
+  var IN = {
+    price:   $("s-price"),
+    daily:   $("s-daily"),
+    occ:     $("s-occ"),
+    monthly: $("s-monthly"),
+    mgmt:    $("s-mgmt"),
+    ops:     $("s-ops"),
+    tax:     $("s-tax")
+  };
+
+  // Формулы 1:1 с референсом: комиссия УК удерживается только в краткосрочном режиме,
+  // налог берётся от положительного остатка после УК и операционных расходов.
+  function net(gross, mgmtPct, ops, taxPct){
+    var afterMgmt = gross - gross * mgmtPct;
+    var afterOps  = afterMgmt - ops;
+    var tax       = Math.max(0, afterOps) * taxPct;
+    return { mgmtFee: gross * mgmtPct, ops: ops, tax: tax, net: afterOps - tax };
+  }
+
+  function model(){
+    var price  = +IN.price.value;
+    var ops    = +IN.ops.value;
+    var taxPct = +IN.tax.value / 100;
+    var mgmtPct = mode === "short" ? +IN.mgmt.value / 100 : 0;
+    var gross  = mode === "short" ? (+IN.daily.value) * (+IN.occ.value) : (+IN.monthly.value);
+
+    var r = net(gross, mgmtPct, ops, taxPct);
+    var netYear = r.net * 12;
+
+    var pb;
+    if (mode === "short") {
+      var daily = +IN.daily.value, occ = +IN.occ.value;
+      pb = function(days){
+        var ny = net(daily * days, mgmtPct, ops, taxPct).net * 12;
+        return ny > 0 ? price / ny : Infinity;
+      };
+      // оптимистичный — полная заполняемость, пессимистичный — половина, но не ниже границы слайдера
+      var pbMin = pb(30), pbAvg = pb(occ), pbMax = pb(Math.max(5, Math.round(occ * 0.5)));
+    } else {
+      // в долгосрочном сценарии референс двигает саму ставку: +20% / текущая / −20%
+      var pbl = function(factor){
+        var ny = net(gross * factor, 0, ops, taxPct).net * 12;
+        return ny > 0 ? price / ny : Infinity;
+      };
+      var pbMin = pbl(1.2), pbAvg = pbl(1), pbMax = pbl(0.8);
+    }
+
+    return {
+      price: price, gross: gross,
+      mgmtFee: r.mgmtFee, ops: r.ops, tax: r.tax,
+      net: r.net, netYear: netYear,
+      yieldPct: price > 0 ? netYear / price * 100 : 0,
+      pbMin: pbMin, pbAvg: pbAvg, pbMax: pbMax
+    };
+  }
+
+  /* ---------- Анимация: один tween 450 мс на все числа сразу ----------
+     Новый ввод стартует с текущей отрисованной позиции, то есть отменяет предыдущую
+     анимацию, а не накладывается на неё. Конечное значение всегда точное. */
+  var DUR = 450;                             // мс
+  var CAP = 60;                              // потолок шкалы окупаемости, лет
+  var KEYS = ["price","gross","mgmtFee","ops","tax","net","netYear","yieldPct","pbMin","pbAvg","pbMax"];
+  var D = {}, G = {}, F = {}, raf = 0, t0 = -1, started = false;
+  var M = null;                              // последняя модель: источник флагов, а не чисел
+
+  function cap(v){ return isFinite(v) ? Math.min(v, CAP) : CAP; }
+
+  function snap(){ for (var i = 0; i < KEYS.length; i++) D[KEYS[i]] = G[KEYS[i]]; }
+
+  function push(m){
+    M = m;
+    G.price = m.price; G.gross = m.gross; G.mgmtFee = m.mgmtFee; G.ops = m.ops;
+    G.tax = m.tax; G.net = m.net; G.netYear = m.netYear; G.yieldPct = m.yieldPct;
+    G.pbMin = cap(m.pbMin); G.pbAvg = cap(m.pbAvg); G.pbMax = cap(m.pbMax);
+
+    if (!started || reduce.matches) {
+      started = true;
+      snap();
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      paint();
+      return;
+    }
+    for (var i = 0; i < KEYS.length; i++) F[KEYS[i]] = D[KEYS[i]];
+    t0 = -1;
+    if (!raf) raf = requestAnimationFrame(step);
+  }
+
+  function step(ts){
+    if (t0 < 0) t0 = ts;
+    var p = Math.min(1, (ts - t0) / DUR);
+    var e = 1 - Math.pow(1 - p, 5);          // easeOutQuint: резкий старт, упругое приземление
+    for (var i = 0; i < KEYS.length; i++){
+      var k = KEYS[i];
+      D[k] = p < 1 ? F[k] + (G[k] - F[k]) * e : G[k];
+    }
+    paint();
+    raf = p < 1 ? requestAnimationFrame(step) : 0;
+    if (p >= 1) t0 = -1;
+  }
+
+  /* ---------- SVG-помощники ---------- */
+  var NS = "http://www.w3.org/2000/svg";
+  function svgEl(name, attrs){
+    var n = document.createElementNS(NS, name);
+    for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  /* ---------- Сигнатура 1: разбор дохода ---------- */
+  var ROW = 46, RAIL = 10, FLOW_H = ROW * 5;
+  var flowSvg = $("flow"), FW = 320;
+  var ROWS = [
+    { label: "Валовой доход",        tone: "var(--flow-1)" },
+    { label: "Комиссия УК",          tone: "var(--flow-2)" },
+    { label: "Операционные расходы", tone: "var(--flow-3)" },
+    { label: "Налог",                tone: "var(--flow-4)" },
+    { label: "Чистая прибыль",       tone: "var(--brand)"  }
+  ];
+  var flowNodes = [];
+
+  (function buildFlow(){
+    for (var i = 0; i < ROWS.length; i++){
+      var y = i * ROW;
+      var lbl = svgEl("text", { x: 0, y: y + 13, "class": "flow-label" });
+      lbl.textContent = ROWS[i].label;
+      var amt = svgEl("text", { x: FW, y: y + 13, "text-anchor": "end", "class": "flow-amount" + (i > 0 && i < 4 ? " dim" : "") });
+      var rail = svgEl("rect", { x: 0, y: y + 22, width: FW, height: RAIL, rx: RAIL / 2, fill: "var(--rail)" });
+      var bar  = svgEl("rect", { x: 0, y: y + 22, width: 0, height: RAIL, rx: RAIL / 2, fill: ROWS[i].tone });
+      var link = i < ROWS.length - 1
+        ? svgEl("line", { x1: 0, x2: 0, y1: y + 22 + RAIL, y2: y + ROW + 22, stroke: "var(--flow-3)", "stroke-width": 1.5, "stroke-dasharray": "2 3" })
+        : null;
+      flowSvg.appendChild(rail); flowSvg.appendChild(bar); flowSvg.appendChild(lbl); flowSvg.appendChild(amt);
+      if (link) flowSvg.appendChild(link);
+      flowNodes.push({ amt: amt, bar: bar, link: link });
+    }
+  })();
+
+  function drawFlow(){
+    var g = Math.max(D.gross, 1), m = Math.max(D.mgmtFee, 0), o = Math.max(D.ops, 0), t = Math.max(D.tax, 0);
+    var n = g - m - o - t;
+    var k = FW / g;
+    var seg = [
+      [0, g],
+      [g - m, g],
+      [g - m - o, g - m],
+      [g - m - o - t, g - m - o],
+      [0, Math.max(0, n)]
+    ];
+    var vals = [D.gross, -D.mgmtFee, -D.ops, -D.tax, n];
+
+    for (var i = 0; i < 5; i++){
+      var x0 = Math.max(0, seg[i][0] * k), x1 = Math.max(x0, Math.min(FW, seg[i][1] * k));
+      var nd = flowNodes[i];
+      nd.bar.setAttribute("x", x0.toFixed(2));
+      nd.bar.setAttribute("width", Math.max(0, x1 - x0).toFixed(2));
+      nd.amt.setAttribute("x", FW);
+      nd.amt.textContent = i === 0 ? money(vals[i]) : (i === 4 ? money(vals[i]) : moneyNeg(-vals[i]));
+      if (nd.link){
+        var lx = Math.max(0, Math.min(FW, seg[i + 1][1] * k));
+        nd.link.setAttribute("x1", lx.toFixed(2));
+        nd.link.setAttribute("x2", lx.toFixed(2));
+      }
+    }
+    flowNodes[4].bar.setAttribute("fill", n > 0 ? "var(--brand)" : "var(--flow-4)");
+  }
+
+  /* ---------- Сигнатура 2: шкала окупаемости ---------- */
+  var PB_H = 92, pbSvg = $("payback"), pbN = {};
+
+  (function buildPayback(){
+    pbN.band  = svgEl("rect", { x: 0, y: 44, width: 0, height: 6, rx: 3, fill: "var(--flow-4)" });
+    pbN.axis  = svgEl("rect", { x: 0, y: 46, width: FW, height: 2, rx: 1, fill: "var(--rail)" });
+    pbN.tMin  = svgEl("rect", { x: 0, y: 40, width: 2, height: 14, fill: "var(--flow-2)" });
+    pbN.tMax  = svgEl("rect", { x: 0, y: 40, width: 2, height: 14, fill: "var(--flow-2)" });
+    pbN.dot   = svgEl("circle", { cx: 0, cy: 47, r: 8, fill: "var(--brand)", stroke: "var(--void)", "stroke-width": 3 });
+    pbN.avg   = svgEl("text", { x: 0, y: 26, "text-anchor": "middle", "class": "pb-avg" });
+    pbN.avgK  = svgEl("text", { x: 0, y: 10, "text-anchor": "middle", "class": "pb-tick" });
+    pbN.minV  = svgEl("text", { x: 0, y: 72, "text-anchor": "middle", "class": "pb-val" });
+    pbN.minK  = svgEl("text", { x: 0, y: 88, "text-anchor": "middle", "class": "pb-tick" });
+    pbN.maxV  = svgEl("text", { x: FW, y: 72, "text-anchor": "middle", "class": "pb-val" });
+    pbN.maxK  = svgEl("text", { x: FW, y: 88, "text-anchor": "middle", "class": "pb-tick" });
+    pbN.avgK.textContent = "средний сценарий";
+    pbN.minK.textContent = "оптимистичный";
+    pbN.maxK.textContent = "пессимистичный";
+    ["axis","band","tMin","tMax","dot","avg","avgK","minV","minK","maxV","maxK"].forEach(function(k){ pbSvg.appendChild(pbN[k]); });
+  })();
+
+  function pbPos(y){
+    // 1 год слева, 40+ справа; всё что дальше — прижимается к правому краю
+    var v = Math.max(1, Math.min(40, y));
+    return (v - 1) / 39 * FW;
+  }
+
+  function drawPayback(){
+    var a = pbPos(D.pbAvg), lo = pbPos(D.pbMin), hi = pbPos(D.pbMax);
+    var dead = !(D.pbAvg < 99);
+    pbN.band.setAttribute("x", Math.min(lo, hi).toFixed(2));
+    pbN.band.setAttribute("width", Math.abs(hi - lo).toFixed(2));
+    pbN.tMin.setAttribute("x", (lo - 1).toFixed(2));
+    pbN.tMax.setAttribute("x", (hi - 1).toFixed(2));
+    pbN.dot.setAttribute("cx", a.toFixed(2));
+    pbN.dot.setAttribute("fill", dead ? "var(--flow-4)" : "var(--brand)");
+
+    var pad = Math.max(46, FW * 0.16);
+    var ax = Math.max(pad, Math.min(FW - pad, a));
+    pbN.avg.setAttribute("x", ax.toFixed(2));
+    pbN.avgK.setAttribute("x", ax.toFixed(2));
+
+    // подписи под своими засечками; при сближении разводим их, чтобы не наложились
+    var lx = Math.max(pad, Math.min(FW - pad, lo));
+    var hx = Math.max(pad, Math.min(FW - pad, hi));
+    var GAP = 104;
+    if (hx - lx < GAP){
+      var mid = (lx + hx) / 2;
+      lx = Math.max(pad, Math.min(FW - pad - GAP, mid - GAP / 2));
+      hx = lx + GAP;
+      if (hx > FW - pad){ hx = FW - pad; lx = hx - GAP; }
+    }
+    pbN.minV.setAttribute("x", lx.toFixed(2)); pbN.minK.setAttribute("x", lx.toFixed(2));
+    pbN.maxV.setAttribute("x", hx.toFixed(2)); pbN.maxK.setAttribute("x", hx.toFixed(2));
+
+    pbN.avg.textContent = years(D.pbAvg, M && M.pbAvg);
+    pbN.minV.textContent = years(D.pbMin, M && M.pbMin);
+    pbN.maxV.textContent = years(D.pbMax, M && M.pbMax);
+  }
+
+  /* ---------- Отрисовка ---------- */
+  function paint(){
+    var lossy = M ? M.net <= 0 : D.net <= 0;
+    $("r-net").textContent = money(D.net);
+    $("r-net").className = "result-big" + (lossy ? " is-loss" : "");
+    $("r-net-year").textContent = "в год: " + money(D.netYear);
+    $("r-warn").className = "result-warn" + (lossy ? " on" : "");
+    $("r-yield").textContent = pct1(D.yieldPct);
+    $("r-annual").textContent = money(D.netYear);
+    $("r-deduct").textContent = moneyNeg(D.ops + D.tax);
+    $("sticky-net").textContent = money(D.net);
+    $("sticky-net").className = "sticky-v" + (lossy ? " is-loss" : "");
+    drawFlow();
+    drawPayback();
+  }
+
+  /* ---------- Размеры ---------- */
+  function layout(){
+    var box = flowSvg.parentNode;
+    var w = Math.max(200, Math.round(box.clientWidth));
+    if (w === FW) return;
+    FW = w;
+    flowSvg.setAttribute("viewBox", "0 0 " + FW + " " + FLOW_H);
+    flowSvg.setAttribute("height", FLOW_H);
+    pbSvg.setAttribute("viewBox", "0 0 " + FW + " " + PB_H);
+    pbSvg.setAttribute("height", PB_H);
+    for (var i = 0; i < flowNodes.length; i++) flowNodes[i].amt.setAttribute("x", FW);
+    var rails = flowSvg.querySelectorAll('rect[fill="var(--rail)"]');
+    for (var r = 0; r < rails.length; r++) rails[r].setAttribute("width", FW);
+    pbN.axis.setAttribute("width", FW);
+    if (started) paint();
+  }
+
+  /* ---------- Слайдеры: заливка трека ---------- */
+  function track(inp){
+    var p = (+inp.value - +inp.min) / (+inp.max - +inp.min) * 100;
+    inp.style.setProperty("--fill", p.toFixed(2) + "%");
+  }
+  IN.mgmt.style.setProperty("--fill-c", "var(--flow-2)");
+  IN.ops.style.setProperty("--fill-c", "var(--flow-2)");
+  IN.tax.style.setProperty("--fill-c", "var(--flow-2)");
+
+  /* ---------- Подписи полей ---------- */
+  function labels(){
+    $("v-price").textContent   = money(+IN.price.value);
+    $("v-daily").textContent   = money(+IN.daily.value);
+    $("v-occ").textContent     = IN.occ.value + " дн.";
+    $("v-monthly").textContent = money(+IN.monthly.value);
+    $("v-mgmt").textContent    = IN.mgmt.value + "%";
+    $("v-ops").textContent     = money(+IN.ops.value) + "/мес";
+    $("v-tax").textContent     = IN.tax.value + "%";
+    for (var k in IN) if (Object.prototype.hasOwnProperty.call(IN, k)) {
+      track(IN[k]);
+      IN[k].setAttribute("aria-valuetext", valueText(k));
+    }
+  }
+  function valueText(k){
+    if (k === "price")   return money(+IN.price.value);
+    if (k === "daily")   return money(+IN.daily.value) + " в сутки";
+    if (k === "occ")     return IN.occ.value + " дней в месяц";
+    if (k === "monthly") return money(+IN.monthly.value) + " в месяц";
+    if (k === "mgmt")    return IN.mgmt.value + " процентов";
+    if (k === "ops")     return money(+IN.ops.value) + " в месяц";
+    return IN.tax.value + " процентов";
+  }
+
+  /* ---------- Режимы ---------- */
+  var modesEl = $("modes");
+  function setMode(next, animate){
+    mode = next;
+    modesEl.setAttribute("data-mode", mode);
+    $("tab-short").setAttribute("aria-selected", String(mode === "short"));
+    $("tab-long").setAttribute("aria-selected", String(mode === "long"));
+
+    var on  = mode === "short" ? $("set-short") : $("set-long");
+    var off = mode === "short" ? $("set-long")  : $("set-short");
+    off.hidden = true; on.hidden = false;
+    on.classList.remove("fade-in");
+    if (animate && !reduce.matches){ void on.offsetWidth; on.classList.add("fade-in"); }
+
+    var longMode = mode === "long";
+    IN.mgmt.disabled = longMode;
+    $("f-mgmt").classList.toggle("is-off", longMode);
+    $("mgmt-note").hidden = !longMode;
+    $("pb-hint").textContent = longMode ? "по трём уровням арендной ставки" : "по трём сценариям заполняемости";
+    ROWS[1].label = longMode ? "Комиссия УК не применяется" : "Комиссия УК";
+    flowSvg.querySelectorAll("text.flow-label")[1].textContent = ROWS[1].label;
+  }
+
+  /* ---------- Состояние в URL ---------- */
+  var hashTimer = 0;
+  function writeHash(){
+    clearTimeout(hashTimer);
+    hashTimer = setTimeout(function(){
+      var p = "m=" + mode +
+        "&p=" + IN.price.value + "&d=" + IN.daily.value + "&o=" + IN.occ.value +
+        "&r=" + IN.monthly.value + "&f=" + IN.mgmt.value + "&x=" + IN.ops.value + "&t=" + IN.tax.value;
+      history.replaceState(null, "", "#" + p);
+    }, 250);
+  }
+  function readHash(){
+    var h = location.hash.replace(/^#/, "");
+    if (!h) return;
+    var map = { p: IN.price, d: IN.daily, o: IN.occ, r: IN.monthly, f: IN.mgmt, x: IN.ops, t: IN.tax };
+    h.split("&").forEach(function(pair){
+      var kv = pair.split("="), k = kv[0], v = kv[1];
+      if (k === "m" && (v === "short" || v === "long")) { mode = v; return; }
+      var inp = map[k];
+      if (!inp || v === undefined || v === "" || isNaN(+v)) return;
+      var n = Math.min(+inp.max, Math.max(+inp.min, +v));
+      inp.value = String(n);
+    });
+  }
+
+  /* ---------- Копирование ---------- */
+  $("copy").addEventListener("click", function(){
+    var m = model();
+    var head = mode === "short"
+      ? "Суточная цена: " + money(+IN.daily.value) + " · Заполняемость: " + IN.occ.value + " дн."
+      : "Ставка: " + money(+IN.monthly.value) + " в месяц";
+    var mgmtLine = mode === "short" ? "Комиссия УК: " + IN.mgmt.value + "%" : "Комиссия УК: не применяется";
+    var txt = [
+      "Калькулятор доходности, Этажи Пхукет",
+      (mode === "short" ? "Краткосрочная аренда" : "Долгосрочная аренда"),
+      "",
+      "Стоимость объекта: " + money(m.price),
+      head,
+      mgmtLine + " · Расходы: " + money(+IN.ops.value) + "/мес · Налог: " + IN.tax.value + "%",
+      "",
+      "Валовой доход: " + money(m.gross) + " в месяц",
+      "Комиссия УК: " + moneyNeg(m.mgmtFee) + " в месяц",
+      "Расходы и налог: " + moneyNeg(m.ops + m.tax) + " в месяц",
+      "Чистая прибыль: " + money(m.net) + " в месяц, " + money(m.netYear) + " в год",
+      "Годовая доходность: " + pct1(m.yieldPct),
+      "Окупаемость: " + years(m.pbMin, m.pbMin) + " / " + years(m.pbAvg, m.pbAvg) + " / " + years(m.pbMax, m.pbMax) + " (опт. / сред. / пес.)",
+      "",
+      location.href
+    ].join("\n");
+
+    var done = function(ok){
+      var b = $("copy");
+      b.textContent = ok ? "Скопировано" : "Не получилось";
+      b.classList.toggle("done", ok);
+      setTimeout(function(){ b.textContent = "Скопировать расчёт"; b.classList.remove("done"); }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function(){ done(true); }, function(){ fallback(txt, done); });
+    } else { fallback(txt, done); }
+  });
+  function fallback(txt, done){
+    var ta = document.createElement("textarea");
+    ta.value = txt; ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    done(ok);
+  }
+
+  /* ---------- Связывание ---------- */
+  function recalc(){
+    labels();
+    push(model());
+    writeHash();
+  }
+  for (var key in IN) if (Object.prototype.hasOwnProperty.call(IN, key)) {
+    IN[key].addEventListener("input", recalc);
+    IN[key].addEventListener("change", function(){
+      var m = model();
+      $("live").textContent = "Чистая прибыль " + money(m.net) + " в месяц, доходность " +
+        pct1(m.yieldPct) + ", окупаемость " + years(m.pbAvg, m.pbAvg) + ".";
+    });
+  }
+  modesEl.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-mode]");
+    if (!b || b.dataset.mode === mode) return;
+    setMode(b.dataset.mode, true);
+    recalc();
+  });
+
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(flowSvg.parentNode);
+  window.addEventListener("resize", layout);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(layout);
+
+  readHash();
+  setMode(mode, false);
+  layout();
+  recalc();
+})();
+</script>
+</body>
+</html>
