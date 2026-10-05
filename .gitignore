@@ -2,3 +2,7 @@
 Thumbs.db
 .playwright-mcp/
 .claude/
+# local env and tooling (cleanup 2026-10-05)
+.env
+.env.local
+*.log
